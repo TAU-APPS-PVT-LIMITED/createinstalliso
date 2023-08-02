@@ -57,6 +57,8 @@ declare -r -a const_supported_macos_version_strings_regex=(
     '^10\.14(\.[[:digit:]+])?$'           # macOS Mojave          10.14
     '^10\.15(\.[[:digit:]+])?$'           # macOS Catalina        10.15
     '^11\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         11
+    '^12\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         12
+    '^13\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         13
 )
 
 # This script has been tested with the following installer applications.
@@ -71,6 +73,8 @@ declare -r -a const_supported_installer_application_display_names=(
     "Install macOS Mojave"       # 10.14
     "Install macOS Catalina"     # 10.15
     "Install macOS Big Sur"      # 11
+    "Install macOS Monterey"     # 12
+    "Install macOS Ventura"      # 13
 )
 
 # List of all known macOS version names and their corresponding version
@@ -94,6 +98,8 @@ declare -r -a const_known_macos_names_and_version_strings_regex=(
     '^10\.14.*$ # macOS Mojave'          # 10.14
     '^10\.15.*$ # macOS Catalina'        # 10.15
     '^11\..*$   # macOS Big Sur'         # 11
+    '^12\..*$   # macOS Monterey'        # 12
+    '^13\..*$   # macOS Ventura'         # 13
 )
 
 # Make sure that macOS Big Sur reports 11 as the macOS version instead
