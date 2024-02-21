@@ -36,12 +36,12 @@ declare -r -i const_root_uid=0
 # large integer values correctly. Therefore, this script requires
 # Mac OS X 10.6 Snow Leopard or later.
 declare -r -a const_unsupported_macos_version_strings_regex=(
-    '^10\.0(\.[[:digit:]+])?$' # Mac OS X Cheetah      10.0
-    '^10\.1(\.[[:digit:]+])?$' # Mac OS X Puma         10.1
-    '^10\.2(\.[[:digit:]+])?$' # Mac OS X Jaguar       10.2
-    '^10\.3(\.[[:digit:]+])?$' # Mac OS X Panther      10.3
-    '^10\.4(\.[[:digit:]+])?$' # Mac OS X Tiger        10.4
-    '^10\.5(\.[[:digit:]+])?$' # Mac OS X Leopard      10.5
+    '^10\.0(\.[[:digit:]+])?$'            # Mac OS X Cheetah      10.0
+    '^10\.1(\.[[:digit:]+])?$'            # Mac OS X Puma         10.1
+    '^10\.2(\.[[:digit:]+])?$'            # Mac OS X Jaguar       10.2
+    '^10\.3(\.[[:digit:]+])?$'            # Mac OS X Panther      10.3
+    '^10\.4(\.[[:digit:]+])?$'            # Mac OS X Tiger        10.4
+    '^10\.5(\.[[:digit:]+])?$'            # Mac OS X Leopard      10.5
 )
 
 # This script has been tested on the following macOS versions.
@@ -57,8 +57,9 @@ declare -r -a const_supported_macos_version_strings_regex=(
     '^10\.14(\.[[:digit:]+])?$'           # macOS Mojave          10.14
     '^10\.15(\.[[:digit:]+])?$'           # macOS Catalina        10.15
     '^11\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         11
-    '^12\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         12
-    '^13\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Big Sur         13
+    '^12\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Monterey        12
+    '^13\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Ventura         13
+    '^14\.[[:digit:]]+(\.[[:digit:]+])?$' # macOS Sonoma          14
 )
 
 # This script has been tested with the following installer applications.
@@ -75,6 +76,7 @@ declare -r -a const_supported_installer_application_display_names=(
     "Install macOS Big Sur"      # 11
     "Install macOS Monterey"     # 12
     "Install macOS Ventura"      # 13
+    "Install macOS Sonoma"       # 14
 )
 
 # List of all known macOS version names and their corresponding version
@@ -100,6 +102,7 @@ declare -r -a const_known_macos_names_and_version_strings_regex=(
     '^11\..*$   # macOS Big Sur'         # 11
     '^12\..*$   # macOS Monterey'        # 12
     '^13\..*$   # macOS Ventura'         # 13
+    '^14\..*$   # macOS Sonoma'          # 14
 )
 
 # Make sure that macOS Big Sur reports 11 as the macOS version instead
@@ -165,7 +168,7 @@ main() {
     # NOTE: This behavior is intended to replicate the behavior of
     # Apple's command 'createinstallmedia' for creation of a bootable
     # installer USB flash drive or other volume.
-    if (($# < 4)); then
+    if (( $# < 4 )); then
         print_error_usage
         exit_with_status 0
     fi
@@ -175,97 +178,97 @@ main() {
     while [[ "${1+set}" == "set" ]]; do
         case "$1" in
 
-        # Option '--applicationpath'
-        -a* | --a*)
-            long_option="--applicationpath"
+            # Option '--applicationpath'
+            -a* | --a* )
+                long_option="--applicationpath"
 
-            if is_option_including_option_parameter "$1"; then
-                if is_long_option "$1"; then
-                    is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
-                    option_parameter="${1#--*=}"
+                if is_option_including_option_parameter "$1"; then
+                    if is_long_option "$1"; then
+                        is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
+                        option_parameter="${1#--*=}"
+                    else
+                        option_parameter="${1#-?}"
+                    fi
+
+                    shift
                 else
-                    option_parameter="${1#-?}"
+                    if is_long_option "$1"; then
+                        is_valid_long_option "$1" "${long_option}" || exit_invalid_option "$1"
+                    fi
+
+                    [[ "${2+set}" == "set" ]] || exit_missing_option_parameter_for_option "$1"
+                    option_parameter="$2"
+                    shift 2
                 fi
 
-                shift
-            else
-                if is_long_option "$1"; then
-                    is_valid_long_option "$1" "${long_option}" || exit_invalid_option "$1"
-                fi
+                option_applicationpath="${option_parameter}"
+                ;;
 
-                [[ "${2+set}" == "set" ]] || exit_missing_option_parameter_for_option "$1"
-                option_parameter="$2"
-                shift 2
-            fi
+            # Option '--isodirectory'
+            -i* | --i* )
+                long_option="--isodirectory"
 
-            option_applicationpath="${option_parameter}"
-            ;;
+                if is_option_including_option_parameter "$1"; then
+                    if is_long_option "$1"; then
+                        is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
+                        option_parameter="${1#--*=}"
+                    else
+                        option_parameter="${1#-?}"
+                    fi
 
-        # Option '--isodirectory'
-        -i* | --i*)
-            long_option="--isodirectory"
-
-            if is_option_including_option_parameter "$1"; then
-                if is_long_option "$1"; then
-                    is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
-                    option_parameter="${1#--*=}"
+                    shift
                 else
-                    option_parameter="${1#-?}"
+                    if is_long_option "$1"; then
+                        is_valid_long_option "$1" "${long_option}" || exit_invalid_option "$1"
+                    fi
+
+                    [[ "${2+set}" == "set" ]] || exit_missing_option_parameter_for_option "$1"
+                    option_parameter="$2"
+                    shift 2
                 fi
 
-                shift
-            else
-                if is_long_option "$1"; then
+                option_isodirectory="${option_parameter}"
+                ;;
+
+            # Option '--nointeraction'
+            -n* | --n* )
+                long_option="--nointeraction"
+
+                if is_long_option_including_option_parameter "$1"; then
+                    is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
+                    exit_no_option_parameter_allowed_for_long_option "${1%%=*}"
+                elif is_long_option "$1"; then
                     is_valid_long_option "$1" "${long_option}" || exit_invalid_option "$1"
+                    shift
+                elif is_short_options_combination "$1"; then
+                    set -- "-${1:2}" "${@:2}"
+                else
+                    shift
                 fi
 
-                [[ "${2+set}" == "set" ]] || exit_missing_option_parameter_for_option "$1"
-                option_parameter="$2"
-                shift 2
-            fi
+                option_nointeraction="true"
+                ;;
 
-            option_isodirectory="${option_parameter}"
-            ;;
-
-        # Option '--nointeraction'
-        -n* | --n*)
-            long_option="--nointeraction"
-
-            if is_long_option_including_option_parameter "$1"; then
-                is_valid_long_option "${1%%=*}" "${long_option}" || exit_invalid_option "$1"
-                exit_no_option_parameter_allowed_for_long_option "${1%%=*}"
-            elif is_long_option "$1"; then
-                is_valid_long_option "$1" "${long_option}" || exit_invalid_option "$1"
+            # End of options
+            -- )
                 shift
-            elif is_short_options_combination "$1"; then
-                set -- "-${1:2}" "${@:2}"
-            else
+                break
+                ;;
+
+            # Ambiguous long option
+            --=* )
+                exit_ambiguous_long_option "${1%%=*}"
+                ;;
+
+            # Invalid short or long option
+            -[^-]* | --?* )
+                exit_invalid_option "$1"
+                ;;
+
+            # Non-option argument or single '-'
+            * )
                 shift
-            fi
-
-            option_nointeraction="true"
-            ;;
-
-        # End of options
-        --)
-            shift
-            break
-            ;;
-
-        # Ambiguous long option
-        --=*)
-            exit_ambiguous_long_option "${1%%=*}"
-            ;;
-
-        # Invalid short or long option
-        -[^-]* | --?*)
-            exit_invalid_option "$1"
-            ;;
-
-        # Non-option argument or single '-'
-        *)
-            shift
-            ;;
+                ;;
 
         esac
     done
@@ -320,31 +323,18 @@ main() {
     # ------------------------------------------------------------------
 
     local installer_minimum_macos_version_string
-    local -i installer_minimum_macos_version_for_compare
+    local -i minimum_macos_version_for_compare
 
     if ! is_supported_installer_application_display_name "${installer_application_display_name}"; then
         print_warning "${installer_application_display_name} has not been tested with this tool."
     fi
 
-    # An installer application type '3' requires OS X Mountain Lion 10.8
-    # or higher to run 'createinstallmedia'.
-    if [[ "${installer_application_type}" == 3 ]]; then
-        installer_minimum_macos_version_string="10.8"
-    fi
+    installer_minimum_macos_version_string="$(get_minimum_macos_version_string "${installer_application_path}" "${installer_application_display_name}")" || exit_with_status 221 "Couldn't get installer application minimum macOS version."
+    minimum_macos_version_for_compare="$(create_macos_version_for_compare "${installer_minimum_macos_version_string}")" || exit_with_status 247 "Invalid macOS version."
 
-    # An installer application type '4' requires OS X Mavericks 10.9
-    # or higher to run 'createinstallmedia'.
-    if [[ "${installer_application_type}" == 4 ]]; then
-        installer_minimum_macos_version_string="10.9"
-    fi
-
-    if [[ ("${installer_application_type}" == 3) || ("${installer_application_type}" == 4) ]]; then
-        installer_minimum_macos_version_for_compare="$(create_macos_version_for_compare "${installer_minimum_macos_version_string}")" || exit_with_status 247 "Invalid macOS version."
-
-        if ((installer_minimum_macos_version_for_compare > macos_version_for_compare)); then
-            macos_name_and_version="$(create_macos_name_and_version "${installer_minimum_macos_version_string}")" || exit_with_status 247 "Invalid macOS version."
-            exit_with_status 238 "You need ${macos_name_and_version} or later to create an ISO image from this installer application."
-        fi
+    if (( minimum_macos_version_for_compare > macos_version_for_compare )); then
+        macos_name_and_version="$(create_macos_name_and_version "${installer_minimum_macos_version_string}")" || exit_with_status 247 "Invalid macOS version."
+        exit_with_status 238 "You need ${macos_name_and_version} or later to create an ISO image from this installer application."
     fi
 
     # ------------------------------------------------------------------
@@ -388,66 +378,69 @@ main() {
 
     case "${installer_application_type}" in
 
-    # Installer application type '1' for:
-    # - Mac OS X Lion 10.7
-    # - OS X Mountain Lion 10.8
-    1)
-        ((required_in_global_tmp_directory = 0))
+        # Installer application type '1' for:
+        # - Mac OS X Lion 10.7
+        # - OS X Mountain Lion 10.8
+        1 )
+            (( required_in_global_tmp_directory = 0 ))
 
-        ((required_in_iso_directory_path = $(get_disk_image_total_non_empty_bytes "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg")))
-        ;;
+            (( required_in_iso_directory_path = $(get_disk_image_total_non_empty_bytes "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg") ))
+            ;;
 
-    # Installer application type '2' for:
-    # - OS X Mavericks 10.9
-    # - OS X Yosemite 10.10
-    # - OS X El Capitan 10.11
-    2)
-        ((required_in_global_tmp_directory = $(get_disk_image_total_non_empty_bytes "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg")))
-        ((required_in_global_tmp_directory = required_in_global_tmp_directory + (required_in_global_tmp_directory * 16 / 100) + 360000000))
+        # Installer application type '2' for:
+        # - OS X Mavericks 10.9
+        # - OS X Yosemite 10.10
+        # - OS X El Capitan 10.11
+        2 )
+            (( required_in_global_tmp_directory = $(get_disk_image_total_non_empty_bytes "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg") ))
+            (( required_in_global_tmp_directory = required_in_global_tmp_directory + (required_in_global_tmp_directory * 16 / 100) + 360000000 ))
 
-        ((required_in_iso_directory_path = $(get_disk_space_used_by_file_or_directory "${installer_application_path}")))
-        ((required_in_iso_directory_path = required_in_iso_directory_path + 1460000000))
-        ;;
+            (( required_in_iso_directory_path = $(get_disk_space_used_by_file_or_directory "${installer_application_path}") ))
+            (( required_in_iso_directory_path = required_in_iso_directory_path + 1460000000 ))
+            ;;
 
-    # Installer application type '3' for:
-    # - macOS Sierra 10.12
-    # - macOS High Sierra 10.13
-    # - macOS Mojave 10.14
-    # - macOS Catalina 10.15
-    3)
-        ((required_in_global_tmp_directory = $(get_disk_space_used_by_file_or_directory "${installer_application_path}")))
-        ((required_in_global_tmp_directory = required_in_global_tmp_directory + 100000000))
+        # Installer application type '3' for:
+        # - macOS Sierra 10.12
+        # - macOS High Sierra 10.13
+        # - macOS Mojave 10.14
+        # - macOS Catalina 10.15
+        3 )
+            (( required_in_global_tmp_directory = $(get_disk_space_used_by_file_or_directory "${installer_application_path}") ))
+            (( required_in_global_tmp_directory = required_in_global_tmp_directory + 100000000 ))
 
-        ((required_in_iso_directory_path = required_in_global_tmp_directory))
-        ;;
+            (( required_in_iso_directory_path = required_in_global_tmp_directory ))
+            ;;
 
-    # Installer application type '4' for:
-    # - macOS Big Sur 11
-    4)
-        ((required_in_global_tmp_directory = $(get_disk_space_used_by_file_or_directory "${installer_application_path}")))
-        ((required_in_global_tmp_directory = required_in_global_tmp_directory + 800000000))
+        # Installer application type '4' for:
+        # - macOS Big Sur 11
+        # - macOS Monterey 12
+        # - macOS Ventura 13
+        # - macOS Sonoma 14
+        4 )
+            (( required_in_global_tmp_directory = $(get_disk_space_used_by_file_or_directory "${installer_application_path}") ))
+            (( required_in_global_tmp_directory = required_in_global_tmp_directory + 800000000 ))
 
-        ((required_in_iso_directory_path = required_in_global_tmp_directory))
-        ;;
+            (( required_in_iso_directory_path = required_in_global_tmp_directory ))
+            ;;
 
     esac
 
     if are_one_same_device "${global_tmp_directory}" "${iso_directory_path}"; then
-        ((missing_in_global_tmp_directory = (required_in_global_tmp_directory + required_in_iso_directory_path) - available_in_global_tmp_directory))
+        (( missing_in_global_tmp_directory = (required_in_global_tmp_directory + required_in_iso_directory_path) - available_in_global_tmp_directory ))
 
-        if ((missing_in_global_tmp_directory > 0)); then
+        if (( missing_in_global_tmp_directory > 0 )); then
             exit_with_missing_disk_space "$(get_volume_name "${global_tmp_directory}")" "temporary files and installer ISO image" "${missing_in_global_tmp_directory}"
         fi
     else
-        ((missing_in_global_tmp_directory = required_in_global_tmp_directory - available_in_global_tmp_directory))
+        (( missing_in_global_tmp_directory = required_in_global_tmp_directory - available_in_global_tmp_directory ))
 
-        if ((missing_in_global_tmp_directory > 0)); then
+        if (( missing_in_global_tmp_directory > 0 )); then
             exit_with_missing_disk_space "$(get_volume_name "${global_tmp_directory}")" "temporary files" "${missing_in_global_tmp_directory}"
         fi
 
-        ((missing_in_iso_directory_path = required_in_iso_directory_path - available_in_iso_directory_path))
+        (( missing_in_iso_directory_path = required_in_iso_directory_path - available_in_iso_directory_path ))
 
-        if ((missing_in_iso_directory_path > 0)); then
+        if (( missing_in_iso_directory_path > 0 )); then
             exit_with_missing_disk_space "$(get_volume_name "${iso_directory_path}")" "installer ISO image" "${missing_in_iso_directory_path}"
         fi
     fi
@@ -466,79 +459,82 @@ main() {
 
     case "${installer_application_type}" in
 
-    # Installer application type '1' for:
-    # - Mac OS X Lion 10.7
-    # - OS X Mountain Lion 10.8
-    1)
-        iso_source_image="${installer_application_path}/Contents/SharedSupport/InstallESD.dmg"
-        ;;
+        # Installer application type '1' for:
+        # - Mac OS X Lion 10.7
+        # - OS X Mountain Lion 10.8
+        1 )
+            iso_source_image="${installer_application_path}/Contents/SharedSupport/InstallESD.dmg"
+            ;;
 
-    # Installer application type '2' for:
-    # - OS X Mavericks 10.9
-    # - OS X Yosemite 10.10
-    # - OS X El Capitan 10.11
-    2)
-        install_esd_image="${installer_application_path}/Contents/SharedSupport/InstallESD.dmg"
-        install_esd_shadow="${global_tmp_directory}/InstallESD.shadow"
-        global_install_esd_mountpoint="${global_tmp_directory}/InstallESD"
-        hdiutil attach "${install_esd_image}" -shadow "${install_esd_shadow}" -readonly -mountpoint "${global_install_esd_mountpoint}" -nobrowse -noverify >/dev/null || exit_with_status 236 "Mount of outer dmg failed."
+        # Installer application type '2' for:
+        # - OS X Mavericks 10.9
+        # - OS X Yosemite 10.10
+        # - OS X El Capitan 10.11
+        2 )
+            install_esd_image="${installer_application_path}/Contents/SharedSupport/InstallESD.dmg"
+            install_esd_shadow="${global_tmp_directory}/InstallESD.shadow"
+            global_install_esd_mountpoint="${global_tmp_directory}/InstallESD"
+            hdiutil attach "${install_esd_image}" -shadow "${install_esd_shadow}" -readonly -mountpoint "${global_install_esd_mountpoint}" -nobrowse -noverify >/dev/null || exit_with_status 236 "Mount of outer dmg failed."
 
-        base_system_image="${global_install_esd_mountpoint}/BaseSystem.dmg"
-        is_file "${base_system_image}" || exit_with_status 235 "BaseSystem missing from the outer dmg, damaged installer image?"
+            base_system_image="${global_install_esd_mountpoint}/BaseSystem.dmg"
+            is_file "${base_system_image}" || exit_with_status 235 "BaseSystem missing from the outer dmg, damaged installer image?"
 
-        install_disk_image="${global_tmp_directory}/InstallDisk.sparseimage"
-        global_install_disk_mountpoint="${global_tmp_directory}/InstallDisk"
+            install_disk_image="${global_tmp_directory}/InstallDisk.sparseimage"
+            global_install_disk_mountpoint="${global_tmp_directory}/InstallDisk"
 
-        echo "Creating disk image from installer image..."
-        hdiutil convert "${base_system_image}" -format UDSP -o "${install_disk_image}" -pmap >/dev/null || exit_with_status 234 "Failed to convert BaseSystem.dmg."
-        hdiutil resize -size 16g "${install_disk_image}" >/dev/null || exit_with_status 233 "Failed to resize disk image."
-        hdiutil attach "${install_disk_image}" -readwrite -mountpoint "${global_install_disk_mountpoint}" -nobrowse -noverify >/dev/null || exit_with_status 232 "The disk image did not mount."
+            echo "Creating disk image from installer image..."
+            hdiutil convert "${base_system_image}" -format UDSP -o "${install_disk_image}" -pmap >/dev/null || exit_with_status 234 "Failed to convert BaseSystem.dmg."
+            hdiutil resize -size 16g "${install_disk_image}" >/dev/null || exit_with_status 233 "Failed to resize disk image."
+            hdiutil attach "${install_disk_image}" -readwrite -mountpoint "${global_install_disk_mountpoint}" -nobrowse -noverify >/dev/null || exit_with_status 232 "The disk image did not mount."
 
-        echo "Copying installer files to disk image..."
-        rm -f "${global_install_disk_mountpoint}/System/Installation/Packages" >/dev/null || exit_with_status 231 "Failed to delete Packages symlink."
-        cp -R -P -p "${global_install_esd_mountpoint}/Packages" "${global_install_disk_mountpoint}/System/Installation/" >/dev/null || exit_with_status 230 "Failed to copy Packages directory."
+            echo "Copying installer files to disk image..."
+            rm -f "${global_install_disk_mountpoint}/System/Installation/Packages" >/dev/null || exit_with_status 231 "Failed to delete Packages symlink."
+            cp -R -P -p "${global_install_esd_mountpoint}/Packages" "${global_install_disk_mountpoint}/System/Installation/" >/dev/null || exit_with_status 230 "Failed to copy Packages directory."
 
-        echo "Making disk image bootable..."
-        core_services_directory="${global_install_disk_mountpoint}/System/Library/CoreServices"
-        bless --folder "${core_services_directory}" --file "${core_services_directory}/boot.efi" --openfolder "${global_install_disk_mountpoint}" --label "${installer_application_display_name}" >/dev/null || exit_with_status 229 "The bless of the installer disk image failed."
+            echo "Making disk image bootable..."
+            core_services_directory="${global_install_disk_mountpoint}/System/Library/CoreServices"
+            bless --folder "${core_services_directory}" --file "${core_services_directory}/boot.efi" --openfolder "${global_install_disk_mountpoint}" --label "${installer_application_display_name}" >/dev/null || exit_with_status 229 "The bless of the installer disk image failed."
 
-        echo "Copying installer image..."
-        cp -P -p "${base_system_image}" "${global_install_disk_mountpoint}/" >/dev/null || exit_with_status 228 "Failed to copy BaseSystem.dmg."
-        cp -P -p "${base_system_image%.dmg}.chunklist" "${global_install_disk_mountpoint}/" >/dev/null || exit_with_status 227 "Failed to copy BaseSystem.chunklist."
+            echo "Copying installer image..."
+            cp -P -p "${base_system_image}" "${global_install_disk_mountpoint}/" >/dev/null || exit_with_status 228 "Failed to copy BaseSystem.dmg."
+            cp -P -p "${base_system_image%.dmg}.chunklist" "${global_install_disk_mountpoint}/" >/dev/null || exit_with_status 227 "Failed to copy BaseSystem.chunklist."
 
-        hdiutil detach "${global_install_esd_mountpoint}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
-        unset global_install_esd_mountpoint
+            hdiutil detach "${global_install_esd_mountpoint}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
+            unset global_install_esd_mountpoint
 
-        hdiutil detach "${global_install_disk_mountpoint}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
-        unset global_install_disk_mountpoint
+            hdiutil detach "${global_install_disk_mountpoint}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
+            unset global_install_disk_mountpoint
 
-        iso_source_image="${install_disk_image}"
-        ;;
+            iso_source_image="${install_disk_image}"
+            ;;
 
-    # Installer application type '3' for:
-    # - macOS Sierra 10.12
-    # - macOS High Sierra 10.13
-    # - macOS Mojave 10.14
-    # - macOS Catalina 10.15
-    # Installer application type '4' for:
-    # - macOS Big Sur 11
-    3 | 4)
-        echo "Creating empty disk image..."
-        install_disk_image="${global_tmp_directory}/InstallDisk.sparseimage"
-        install_disk_volname="InstallMedia.${random_string}"
-        hdiutil create -size 16g "${install_disk_image}" -type SPARSE -fs HFS+J -volname "${install_disk_volname}" >/dev/null || exit_with_status 225 "Failed to create disk image."
-        global_install_disk_device_node="$(hdiutil attach "${install_disk_image}" -readwrite -nobrowse -noverify 2>/dev/null | (
-            IFS=$' \t\n' read -r device_node remainder
-            echo "${device_node}"
-        ))" || exit_with_status 232 "The disk image did not mount."
+        # Installer application type '3' for:
+        # - macOS Sierra 10.12
+        # - macOS High Sierra 10.13
+        # - macOS Mojave 10.14
+        # - macOS Catalina 10.15
+        #
+        # or
+        #
+        # Installer application type '4' for:
+        # - macOS Big Sur 11
+        # - macOS Monterey 12
+        # - macOS Ventura 13
+        # - macOS Sonoma 14
+        3 | 4 )
+            echo "Creating empty disk image..."
+            install_disk_image="${global_tmp_directory}/InstallDisk.sparseimage"
+            install_disk_volname="InstallMedia.${random_string}"
+            hdiutil create -size 16g "${install_disk_image}" -type SPARSE -fs HFS+J -volname "${install_disk_volname}" >/dev/null || exit_with_status 225 "Failed to create disk image."
+            global_install_disk_device_node="$(hdiutil attach "${install_disk_image}" -readwrite -nobrowse -noverify 2>/dev/null | (IFS=$' \t\n' read -r device_node remainder; echo "${device_node}"))" || exit_with_status 232 "The disk image did not mount."
 
-        create_install_media "${installer_application_path}" "${install_disk_volname}" || exit_with_status 224 "Failed to convert disk image into bootable install media."
+            create_install_media "${installer_application_path}" "${install_disk_volname}" || exit_with_status 224 "Failed to convert disk image into bootable install media."
 
-        hdiutil detach "${global_install_disk_device_node}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
-        unset global_install_disk_device_node
+            hdiutil detach "${global_install_disk_device_node}" -force >/dev/null || exit_with_status 226 "Couldn't unmount disk image."
+            unset global_install_disk_device_node
 
-        iso_source_image="${install_disk_image}"
-        ;;
+            iso_source_image="${install_disk_image}"
+            ;;
 
     esac
 
@@ -611,7 +607,7 @@ get_available_disk_space() {
 
     available_kilobytes="$(df -k "${file_or_directory}" | awk 'FNR==2 { printf("%s\n", $4) }')" || return 1
 
-    echo "$((available_kilobytes * 1024))"
+    echo "$(( available_kilobytes * 1024 ))"
 }
 
 ##
@@ -629,7 +625,7 @@ get_disk_space_used_by_file_or_directory() {
 
     used_kilobytes="$(du -s -k "${file_or_directory}" | awk '{ printf("%s\n", $1) }')" || return 1
 
-    echo "$((used_kilobytes * 1024))"
+    echo "$(( used_kilobytes * 1024 ))"
 }
 
 ##
@@ -821,16 +817,10 @@ get_absolute_logical_path() {
     is_existing "${file_or_directory}" || return 1
 
     if is_directory "${file_or_directory}"; then
-        echo "$(
-            cd "${file_or_directory}"
-            pwd -L
-        )"
+        echo "$(cd "${file_or_directory}"; pwd -L)"
     else
         if [[ "${file_or_directory}" == */* ]]; then
-            echo "$(
-                cd "${file_or_directory%/*}"
-                pwd -L
-            )/${file_or_directory##*/}"
+            echo "$(cd "${file_or_directory%/*}"; pwd -L)/${file_or_directory##*/}"
         else
             echo "$(pwd -L)/${file_or_directory}"
         fi
@@ -981,8 +971,8 @@ signal_handler() {
     trap - "${signal_number}"
     kill -n "${signal_number}" "$$"
 
-    if (((signal_number >= min_signal_number) && (signal_number <= max_signal_number))); then
-        exit "$((128 + signal_number))"
+    if (( (signal_number >= min_signal_number) && (signal_number <= max_signal_number) )); then
+        exit "$(( 128 + signal_number ))"
     fi
 }
 
@@ -1031,7 +1021,7 @@ exit_with_status() {
     shift
     error_messages=("$@")
 
-    if ((${#error_messages[@]} > 0)); then
+    if (( ${#error_messages[@]} > 0 )); then
         print_error "${error_messages[@]}"
     fi
 
@@ -1111,10 +1101,10 @@ print_error_usage() {
 ##
 create_example_installer_application_name() {
     local -r -i number_of_elements="${#const_supported_installer_application_display_names[@]}"
-    local example_installer_application_name="${const_supported_installer_application_display_names[${number_of_elements} - 1]}.app"
+    local example_installer_application_name="${const_supported_installer_application_display_names[${number_of_elements}-1]}.app"
     local -i i
 
-    for ((i = number_of_elements - 1; i >= 0; i--)); do
+    for (( i = number_of_elements - 1; i >= 0; i-- )); do
         if is_valid_installer_application_path "/Applications/${const_supported_installer_application_display_names[${i}]}.app"; then
             example_installer_application_name="${const_supported_installer_application_display_names[${i}]}.app"
             break
@@ -1280,7 +1270,7 @@ exit_missing_option_parameter_for_option() {
 ## @param      $1    The long option as provided on the command line
 ##                   (including leading '--').
 ##
-exit_no_option_parameter_allowed_for_long_option() {
+exit_no_option_parameter_allowed_for_long_option(){
     local -r long_option="$1"
 
     print_error "${const_script_name}: option \`${long_option}' doesn't allow an argument"
@@ -1375,6 +1365,9 @@ is_valid_installer_application_path() {
     local installer_application_identifier
     local valid_installer_application_identifier_regex='^com\.apple\.InstallAssistant\.[a-zA-Z0-9.-]+$'
 
+    local installer_application_minimum_system_version
+    local valid_installer_application_minimum_system_version='^[[:digit:]]+\.[[:digit:]]+\.?[[:digit:]]*$'
+
     local system_image_url
 
     is_not_empty "${installer_application_path}" || return 1
@@ -1386,110 +1379,125 @@ is_valid_installer_application_path() {
     installer_application_display_name="$(get_installer_application_display_name "${installer_application_path}")" || return 1
     is_not_empty "${installer_application_display_name}" || return 1
 
+    # This file is required because it contains the value for
+    # 'LSMinimumSystemVersion', which is the minimum system version
+    # required for the installer application. This version is used in
+    # case the installer application is not explicitly listed in the
+    # function 'get_minimum_macos_version_string'.
+    if is_file "${installer_application_path}/Contents/Info.plist"; then
+        installer_application_minimum_system_version="$(get_installer_application_minimum_system_version "${installer_application_path}")" || return 1
+        [[ "${installer_application_minimum_system_version}" =~ ${valid_installer_application_minimum_system_version} ]] || return 1
+    else
+        return 1
+    fi
+
     installer_application_type="$(get_installer_application_type "${installer_application_path}")" || return 1
 
     case "${installer_application_type}" in
 
-    # Installer application type '0' for:
-    # - Unknown type
-    # - Stub installer
-    0)
-        return 1
-        ;;
-
-    # Installer application type '1' for:
-    # - Mac OS X Lion 10.7
-    # - OS X Mountain Lion 10.8
-    1)
-        # This file is required because it will be used as source
-        # to create the installer disk image.
-        is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
-
-        return 0
-        ;;
-
-    # Installer application type '2' for:
-    # - OS X Mavericks 10.9
-    # - OS X Yosemite 10.10
-    # - OS X El Capitan 10.11
-    2)
-        # This file is required because it contains all the files
-        # required to build the installer disk image.
-        is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
-
-        # All subsequent checks are the same as those performed by
-        # Apple's command 'createinstallmedia' to determine if the
-        # OS installer application is valid.
-        is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
-        is_file "${installer_application_path}/Contents/SharedSupport/OSInstall.mpkg" || return 1
-
-        if is_file "${installer_application_path}/Contents/Info.plist"; then
-            installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
-            [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
-
-            installer_application_short_version_string="$(get_installer_application_short_version_string "${installer_application_path}")" || return 1
-            [[ "${installer_application_short_version_string}" =~ ${valid_installer_application_short_version_string_regex} ]] || return 1
-        else
+        # Installer application type '0' for:
+        # - Unknown type
+        # - Stub installer
+        0 )
             return 1
-        fi
+            ;;
 
-        return 0
-        ;;
+        # Installer application type '1' for:
+        # - Mac OS X Lion 10.7
+        # - OS X Mountain Lion 10.8
+        1 )
+            # This file is required because it will be used as source
+            # to create the installer disk image.
+            is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
 
-    # Installer application type '3' for:
-    # - macOS Sierra 10.12
-    # - macOS High Sierra 10.13
-    # - macOS Mojave 10.14
-    # - macOS Catalina 10.15
-    3)
-        # Apple's command 'createinstallmedia' is required because
-        # it will be used to create the installer disk image.
-        is_file "${installer_application_path}/Contents/Resources/createinstallmedia" || return 1
+            return 0
+            ;;
 
-        # All subsequent checks are the same as those performed by
-        # Apple's command 'createinstallmedia' to determine if the
-        # OS installer application is valid.
-        if is_file "${installer_application_path}/Contents/Info.plist"; then
-            installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
-            [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
+        # Installer application type '2' for:
+        # - OS X Mavericks 10.9
+        # - OS X Yosemite 10.10
+        # - OS X El Capitan 10.11
+        2 )
+            # This file is required because it contains all the files
+            # required to build the installer disk image.
+            is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
 
-            installer_application_short_version_string="$(get_installer_application_short_version_string "${installer_application_path}")" || return 1
-            [[ "${installer_application_short_version_string}" =~ ${valid_installer_application_short_version_string_regex} ]] || return 1
-        else
-            return 1
-        fi
+            # All subsequent checks are the same as those performed by
+            # Apple's command 'createinstallmedia' to determine if the
+            # OS installer application is valid.
+            is_file "${installer_application_path}/Contents/SharedSupport/InstallESD.dmg" || return 1
+            is_file "${installer_application_path}/Contents/SharedSupport/OSInstall.mpkg" || return 1
 
-        if is_file "${installer_application_path}/Contents/SharedSupport/InstallInfo.plist"; then
-            system_image_url="$(get_system_image_url "${installer_application_path}")" || return 1
-            is_file "${installer_application_path}/Contents/SharedSupport/${system_image_url}" || return 1
-        else
-            return 1
-        fi
+            if is_file "${installer_application_path}/Contents/Info.plist"; then
+                installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
+                [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
 
-        return 0
-        ;;
+                installer_application_short_version_string="$(get_installer_application_short_version_string "${installer_application_path}")" || return 1
+                [[ "${installer_application_short_version_string}" =~ ${valid_installer_application_short_version_string_regex} ]] || return 1
+            else
+                return 1
+            fi
 
-    # Installer application type '4' for:
-    # - macOS Big Sur 11
-    4)
-        # Apple's command 'createinstallmedia' is required because
-        # it will be used to create the installer disk image.
-        is_file "${installer_application_path}/Contents/Resources/createinstallmedia" || return 1
+            return 0
+            ;;
 
-        # All subsequent checks are the same as those performed by
-        # Apple's command 'createinstallmedia' to determine if the
-        # OS installer application is valid.
-        if is_file "${installer_application_path}/Contents/Info.plist"; then
-            installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
-            [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
-        else
-            return 1
-        fi
+        # Installer application type '3' for:
+        # - macOS Sierra 10.12
+        # - macOS High Sierra 10.13
+        # - macOS Mojave 10.14
+        # - macOS Catalina 10.15
+        3 )
+            # Apple's command 'createinstallmedia' is required because
+            # it will be used to create the installer disk image.
+            is_file "${installer_application_path}/Contents/Resources/createinstallmedia" || return 1
 
-        is_file "${installer_application_path}/Contents/SharedSupport/SharedSupport.dmg" || return 1
+            # All subsequent checks are the same as those performed by
+            # Apple's command 'createinstallmedia' to determine if the
+            # OS installer application is valid.
+            if is_file "${installer_application_path}/Contents/Info.plist"; then
+                installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
+                [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
 
-        return 0
-        ;;
+                installer_application_short_version_string="$(get_installer_application_short_version_string "${installer_application_path}")" || return 1
+                [[ "${installer_application_short_version_string}" =~ ${valid_installer_application_short_version_string_regex} ]] || return 1
+            else
+                return 1
+            fi
+
+            if is_file "${installer_application_path}/Contents/SharedSupport/InstallInfo.plist"; then
+                system_image_url="$(get_system_image_url "${installer_application_path}")" || return 1
+                is_file "${installer_application_path}/Contents/SharedSupport/${system_image_url}" || return 1
+            else
+                return 1
+            fi
+
+            return 0
+            ;;
+
+        # Installer application type '4' for:
+        # - macOS Big Sur 11
+        # - macOS Monterey 12
+        # - macOS Ventura 13
+        # - macOS Sonoma 14
+        4 )
+            # Apple's command 'createinstallmedia' is required because
+            # it will be used to create the installer disk image.
+            is_file "${installer_application_path}/Contents/Resources/createinstallmedia" || return 1
+
+            # All subsequent checks are the same as those performed by
+            # Apple's command 'createinstallmedia' to determine if the
+            # OS installer application is valid.
+            if is_file "${installer_application_path}/Contents/Info.plist"; then
+                installer_application_identifier="$(get_installer_application_identifier "${installer_application_path}")" || return 1
+                [[ "${installer_application_identifier}" =~ ${valid_installer_application_identifier_regex} ]] || return 1
+            else
+                return 1
+            fi
+
+            is_file "${installer_application_path}/Contents/SharedSupport/SharedSupport.dmg" || return 1
+
+            return 0
+            ;;
 
     esac
 
@@ -1573,12 +1581,16 @@ get_installer_application_display_name() {
 ##               - macOS Catalina 10.15
 ##             * Installer application type '4' for:
 ##               - macOS Big Sur 11
+##               - macOS Monterey 12
+##               - macOS Ventura 13
+##               - macOS Sonoma 14
 ##
 ## @param      $1    The path to an installer application.
 ##
 ## @return     The type of the installer application.
 ##
-get_installer_application_type() {
+get_installer_application_type()
+{
     local -r installer_application_path="$1"
     local -i installer_application_type=0
 
@@ -1608,6 +1620,70 @@ get_installer_application_type() {
 }
 
 ##
+## @brief      Gets the minimum macOS version required to create an ISO
+##             image from the installer application.
+##
+## @param      $1    The path to an installer application.
+## @param      $2    The installer application display name.
+##
+## @return     The minimum macOS version string.
+##
+get_minimum_macos_version_string() {
+    local -r installer_application_path="$1"
+    local -r installer_application_display_name="$2"
+    local minimum_macos_version_string
+
+    case "${installer_application_display_name}" in
+
+        # Installer application for:
+        # - Mac OS X Lion 10.7
+        # - OS X Mountain Lion 10.8
+        # - OS X Mavericks 10.9
+        # - OS X Yosemite 10.10
+        # - OS X El Capitan 10.11
+        "Install Mac OS X Lion" | "Install OS X Mountain Lion" | "Install OS X Mavericks" | "Install OS X Yosemite" | "Install OS X El Capitan" )
+            minimum_macos_version_string="10.6"
+            ;;
+
+        # Installer application for:
+        # - macOS Sierra 10.12
+        # - macOS High Sierra 10.13
+        # - macOS Mojave 10.14
+        # - macOS Catalina 10.15
+        "Install macOS Sierra" | "Install macOS High Sierra" | "Install macOS Mojave" | "Install macOS Catalina" )
+            minimum_macos_version_string="10.8"
+            ;;
+
+        # Installer application for:
+        # - macOS Big Sur 11
+        # - macOS Monterey 12
+        "Install macOS Big Sur" | "Install macOS Monterey" )
+            minimum_macos_version_string="10.9"
+            ;;
+
+        # Installer application for:
+        # - macOS Ventura 13
+        "Install macOS Ventura" )
+            minimum_macos_version_string="10.11"
+            ;;
+
+        # Installer application for:
+        # - macOS Sonoma 14
+        "Install macOS Sonoma" )
+            minimum_macos_version_string="10.13"
+            ;;
+
+        # Unknown installer application
+        * )
+            minimum_macos_version_string="$(get_installer_application_minimum_system_version "${installer_application_path}")" || return 1
+            ;;
+
+    esac
+
+    echo "${minimum_macos_version_string}"
+}
+
+##
 ## @brief      Gets the total non empty bytes of a disk image.
 ##
 ## @param      $1    The disk image.
@@ -1630,6 +1706,22 @@ get_disk_image_total_non_empty_bytes() {
 }
 
 ##
+## @brief      Gets the 'minimum system version' of an installer
+##             application.
+##
+## @param      $1    The path to an installer application.
+##
+## @return     The installer application 'minimum system version'.
+##
+get_installer_application_minimum_system_version() {
+    local -r installer_application_path="$1"
+
+    is_not_empty "${installer_application_path}" || return 1
+
+    get_plist_value ":LSMinimumSystemVersion" "${installer_application_path}/Contents/Info.plist"
+}
+
+##
 ## @brief      Gets the 'short version string' of an installer
 ##             application.
 ##
@@ -1637,7 +1729,8 @@ get_disk_image_total_non_empty_bytes() {
 ##
 ## @return     The installer application 'short version string'.
 ##
-get_installer_application_short_version_string() {
+get_installer_application_short_version_string()
+{
     local -r installer_application_path="$1"
 
     is_not_empty "${installer_application_path}" || return 1
@@ -1652,7 +1745,8 @@ get_installer_application_short_version_string() {
 ##
 ## @return     The installer application 'identifier'.
 ##
-get_installer_application_identifier() {
+get_installer_application_identifier()
+{
     local -r installer_application_path="$1"
 
     is_not_empty "${installer_application_path}" || return 1
@@ -1668,7 +1762,8 @@ get_installer_application_identifier() {
 ##
 ## @return     The URL of the system image.
 ##
-get_system_image_url() {
+get_system_image_url()
+{
     local -r installer_application_path="$1"
 
     is_not_empty "${installer_application_path}" || return 1
@@ -1695,7 +1790,7 @@ create_macos_version_for_compare() {
     macos_minor_version="${macos_version[1]:-0}"
     macos_patch_version="${macos_version[2]:-0}"
 
-    echo "$(((macos_major_version * 10000) + (macos_minor_version * 100) + macos_patch_version))"
+    echo "$(( (macos_major_version * 10000) + (macos_minor_version * 100) + macos_patch_version ))"
 }
 
 ##
@@ -1757,7 +1852,7 @@ create_install_media() {
         applicationpath_option_parameter="${installer_application_path}"
     fi
 
-    { unused="$({ script -k -q /dev/null "${installer_application_path}/Contents/Resources/createinstallmedia" --volume "/Volumes/${install_disk_volname}" "${applicationpath_option_name}" "${applicationpath_option_parameter}" --nointeraction 2>/dev/null > >(parse_create_install_media); } 3>&1 >&4 4>&-)"; } 4>&1
+    { unused="$( { script -k -q /dev/null "${installer_application_path}/Contents/Resources/createinstallmedia" --volume "/Volumes/${install_disk_volname}" "${applicationpath_option_name}" "${applicationpath_option_parameter}" --nointeraction 2>/dev/null > >(parse_create_install_media); } 3>&1 >&4 4>&-)"; } 4>&1
     exit_status="$?"
 
     if script_createinstallmedia_canceled_by_sigint "${exit_status}"; then
@@ -1799,19 +1894,13 @@ parse_create_install_media() {
         'Done.'
         'Install media now available at '
     )
-    local -r trigger_text="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_text_array[@]}"
-    )"
+    local -r trigger_text="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_text_array[@]}")"
     local -r -a trigger_line_mute_array=(
         'Copy complete.'
         'Done.'
         'Install media now available at '
     )
-    local -r trigger_line_mute="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_line_mute_array[@]}"
-    )"
+    local -r trigger_line_mute="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_line_mute_array[@]}")"
     local -r trigger_newline_mute_array=(
         '100%...'
         ' 100%'
@@ -1821,21 +1910,12 @@ parse_create_install_media() {
         'Copying installer files to disk...'
         'Copying to disk: 0%...'
     )
-    local -r trigger_copying_line="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_copying_line_array[@]}"
-    )"
-    local -r trigger_newline_mute="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_newline_mute_array[@]}"
-    )"
+    local -r trigger_copying_line="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_copying_line_array[@]}")"
+    local -r trigger_newline_mute="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_newline_mute_array[@]}")"
     local -r trigger_making_line_array=(
         'Making disk bootable...'
     )
-    local -r trigger_making_line="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_making_line_array[@]}"
-    )"
+    local -r trigger_making_line="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_making_line_array[@]}")"
     local is_line_mute="false"
     local is_newline_mute="false"
 
@@ -1859,23 +1939,23 @@ parse_create_install_media() {
             is_newline_mute="false"
             text_buffer=""
         else
-            while (("${#text_buffer}" > 0)); do
-                if [[ "${trigger_text/"${separator}${text_buffer}"/}" != "${trigger_text}" ]]; then
-                    if [[ "${trigger_text/"${separator}${text_buffer}${separator}"/}" != "${trigger_text}" ]]; then
-                        if [[ "${trigger_line_mute/"${separator}${text_buffer}${separator}"/}" != "${trigger_line_mute}" ]]; then
+            while (( "${#text_buffer}" > 0 )); do
+                if [[ "${trigger_text/"${separator}${text_buffer}"}" != "${trigger_text}" ]]; then
+                    if [[ "${trigger_text/"${separator}${text_buffer}${separator}"}" != "${trigger_text}" ]]; then
+                        if [[ "${trigger_line_mute/"${separator}${text_buffer}${separator}"}" != "${trigger_line_mute}" ]]; then
                             is_line_mute="true"
                         fi
 
-                        if [[ "${trigger_newline_mute/"${separator}${text_buffer}${separator}"/}" != "${trigger_newline_mute}" ]]; then
+                        if [[ "${trigger_newline_mute/"${separator}${text_buffer}${separator}"}" != "${trigger_newline_mute}" ]]; then
                             is_newline_mute="true"
                         fi
 
-                        if [[ "${trigger_copying_line/"${separator}${text_buffer}${separator}"/}" != "${trigger_copying_line}" ]]; then
+                        if [[ "${trigger_copying_line/"${separator}${text_buffer}${separator}"}" != "${trigger_copying_line}" ]]; then
                             echo_n "Copying installer files to disk image..."
                             echo_n $'\r\n'
                         fi
 
-                        if [[ "${trigger_making_line/"${separator}${text_buffer}${separator}"/}" != "${trigger_making_line}" ]]; then
+                        if [[ "${trigger_making_line/"${separator}${text_buffer}${separator}"}" != "${trigger_making_line}" ]]; then
                             echo_n "Making disk image bootable..."
                         fi
 
@@ -1949,7 +2029,7 @@ create_iso_image() {
 
     is_existing "${iso_source_image}" || return 1
 
-    { unused="$({ script -k -q "${typescript_file}" hdiutil makehybrid -o "${iso_destination_image}" "${iso_source_image}" -hfs -udf -default-volume-name "${default_volume_name}" 2>/dev/null > >(parse_create_iso_image); } 3>&1 >&4 4>&-)"; } 4>&1
+    { unused="$( { script -k -q "${typescript_file}" hdiutil makehybrid -o "${iso_destination_image}" "${iso_source_image}" -hfs -udf -default-volume-name "${default_volume_name}" 2>/dev/null > >(parse_create_iso_image); } 3>&1 >&4 4>&-)"; } 4>&1
     exit_status="$?"
 
     if script_hdiutil_makehybrid_canceled_by_sigint "${typescript_file}"; then
@@ -1978,37 +2058,25 @@ parse_create_iso_image() {
         'hdiutil: '
         'canceling...'
     )
-    local -r trigger_text="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_text_array[@]}"
-    )"
+    local -r trigger_text="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_text_array[@]}")"
     local -r -a trigger_line_mute_array=(
         'Creating hybrid image...'
         'hdiutil: '
     )
-    local -r trigger_line_mute="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_line_mute_array[@]}"
-    )"
+    local -r trigger_line_mute="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_line_mute_array[@]}")"
     local -r -a trigger_progress_line_array=(
         'Creating hybrid image...'
     )
-    local -r trigger_progress_line="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_progress_line_array[@]}"
-    )"
+    local -r trigger_progress_line="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_progress_line_array[@]}")"
     local -r -a trigger_mute_array=(
         'canceling...'
     )
-    local -r trigger_mute="$(
-        printf "%s" "${separator}"
-        printf "%s${separator}" "${trigger_mute_array[@]}"
-    )"
+    local -r trigger_mute="$(printf "%s" "${separator}"; printf "%s${separator}" "${trigger_mute_array[@]}")"
     local is_line_mute="false"
     local is_mute="false"
     local is_progress_line="false"
     local -r shell_columns="$(tput cols 2>/dev/tty)"
-    local -r -i dot_count_max="$((shell_columns - 2))"
+    local -r -i dot_count_max="$(( shell_columns - 2 ))"
     local -i dot_count=0
     local -i dot_increment
     local -i percent
@@ -2021,7 +2089,7 @@ parse_create_iso_image() {
             continue
         fi
 
-        if ((${#char_history} > 4)); then
+        if (( ${#char_history} > 4 )); then
             last_four_chars="${char_history: -4}"
         else
             last_four_chars="${char_history}"
@@ -2029,7 +2097,7 @@ parse_create_iso_image() {
 
         char_history="${char_history}${char}"
 
-        if [[ ("${is_progress_line}" == "true") && ("${last_four_chars}" == $'\r\n\r\n') && ("${char}" != ".") ]]; then
+        if [[ ("${is_progress_line}" == "true") && ("${last_four_chars}" == $'\r\n\r\n') && ("${char}" != "." ) ]]; then
             is_progress_line="false"
         fi
 
@@ -2047,19 +2115,19 @@ parse_create_iso_image() {
             is_line_mute="false"
             text_buffer=""
         else
-            while (("${#text_buffer}" > 0)); do
-                if [[ "${trigger_text/"${separator}${text_buffer}"/}" != "${trigger_text}" ]]; then
-                    if [[ "${trigger_text/"${separator}${text_buffer}${separator}"/}" != "${trigger_text}" ]]; then
-                        if [[ "${trigger_line_mute/"${separator}${text_buffer}${separator}"/}" != "${trigger_line_mute}" ]]; then
+            while (( "${#text_buffer}" > 0 )); do
+                if [[ "${trigger_text/"${separator}${text_buffer}"}" != "${trigger_text}" ]]; then
+                    if [[ "${trigger_text/"${separator}${text_buffer}${separator}"}" != "${trigger_text}" ]]; then
+                        if [[ "${trigger_line_mute/"${separator}${text_buffer}${separator}"}" != "${trigger_line_mute}" ]]; then
                             is_line_mute="true"
                         fi
 
-                        if [[ "${trigger_progress_line/"${separator}${text_buffer}${separator}"/}" != "${trigger_progress_line}" ]]; then
+                        if [[ "${trigger_progress_line/"${separator}${text_buffer}${separator}"}" != "${trigger_progress_line}" ]]; then
                             is_progress_line="true"
                             echo_n "Creating ISO image: 0%..."
                         fi
 
-                        if [[ "${trigger_mute/"${separator}${text_buffer}${separator}"/}" != "${trigger_mute}" ]]; then
+                        if [[ "${trigger_mute/"${separator}${text_buffer}${separator}"}" != "${trigger_mute}" ]]; then
                             is_mute="true"
                         fi
 
@@ -2070,15 +2138,15 @@ parse_create_iso_image() {
                 else
                     if [[ "${is_progress_line}" == "true" ]]; then
                         text_buffer_with_dots="${text_buffer}"
-                        text_buffer="${text_buffer//./}"
-                        ((dot_increment = ${#text_buffer_with_dots} - ${#text_buffer}))
+                        text_buffer="${text_buffer//.}"
+                        (( dot_increment = ${#text_buffer_with_dots} - ${#text_buffer} ))
 
-                        if ((dot_increment > 0)); then
-                            ((dot_count += dot_increment))
-                            ((percent = (100 * dot_count) / dot_count_max))
+                        if (( dot_increment > 0 )); then
+                            (( dot_count += dot_increment ))
+                            (( percent = (100 * dot_count) / dot_count_max ))
 
                             for percent_step in "${percent_steps[@]}"; do
-                                if (((last_percent < percent_step) && (percent >= percent_step))); then
+                                if (( (last_percent < percent_step) && (percent >= percent_step) )); then
                                     echo_n " ${percent_step}%"
 
                                     if [[ "${percent_step}" != 100 ]]; then
@@ -2087,7 +2155,7 @@ parse_create_iso_image() {
                                 fi
                             done
 
-                            ((last_percent = percent))
+                            (( last_percent = percent ))
                         fi
                     fi
 
@@ -2158,7 +2226,7 @@ create_human_readable_byte_size() {
     local -r -i number_to_add_for_rounding="$2"
     local -r -i round_up_to_multiple_of_value="$3"
     local -r -a units=("Bytes" "KB" "MB" "GB" "TB" "PB" "EB")
-    local -r -i max_power_of_thousand="$((${#units[@]} - 1))"
+    local -r -i max_power_of_thousand="$(( ${#units[@]} - 1 ))"
     local -i number_of_digits
     local -i power_of_thousand
     local -i first_three_digits
@@ -2168,34 +2236,34 @@ create_human_readable_byte_size() {
     local fractional_part
 
     # Use absolute value of bytes for further calculations
-    ((bytes = ${bytes//-/}))
+    (( bytes = ${bytes//-/} ))
 
     # Round up the bytes to a multiple of a defined value
-    ((bytes = (bytes / round_up_to_multiple_of_value + 1) * round_up_to_multiple_of_value))
+    (( bytes = (bytes / round_up_to_multiple_of_value + 1) * round_up_to_multiple_of_value ))
 
-    ((number_of_digits = ${#bytes}))
-    ((power_of_thousand = (number_of_digits - 1) / 3))
-    ((first_three_digits = ${bytes:0:3}))
-    ((truncated_digits = ${bytes:3}))
+    (( number_of_digits = ${#bytes} ))
+    (( power_of_thousand = (number_of_digits - 1) / 3 ))
+    (( first_three_digits = ${bytes:0:3} ))
+    (( truncated_digits = ${bytes:3} ))
 
-    if ((power_of_thousand > max_power_of_thousand)); then
-        ((power_of_thousand = max_power_of_thousand))
+    if (( power_of_thousand > max_power_of_thousand )); then
+        (( power_of_thousand = max_power_of_thousand ))
     fi
 
     # Round up to three decimal places
-    if ((truncated_digits > 0)); then
-        ((first_three_digits = first_three_digits + number_to_add_for_rounding))
+    if (( truncated_digits > 0 )); then
+        (( first_three_digits = first_three_digits + number_to_add_for_rounding ))
     fi
 
-    ((integer_part_number_of_digits = number_of_digits - 3 * power_of_thousand))
-    ((integer_part = ${first_three_digits:0:${integer_part_number_of_digits}}))
+    (( integer_part_number_of_digits = number_of_digits - 3 * power_of_thousand ))
+    (( integer_part = ${first_three_digits:0:${integer_part_number_of_digits}} ))
 
     # Add '0's to integer part if required
-    if ((integer_part_number_of_digits > 3)); then
-        ((integer_part = "${integer_part}$(printf "0%.0s" $(seq 1 $((integer_part_number_of_digits - 3))))"))
+    if (( integer_part_number_of_digits > 3 )); then
+        (( integer_part = "${integer_part}$(printf "0%.0s" $(seq 1 $(( integer_part_number_of_digits - 3 ))))" ))
     fi
 
-    fractional_part="${first_three_digits:$((integer_part_number_of_digits))}"
+    fractional_part="${first_three_digits:$(( integer_part_number_of_digits ))}"
 
     echo "$(create_decimal_number "${integer_part}" "${fractional_part}") ${units[${power_of_thousand}]}"
 }
